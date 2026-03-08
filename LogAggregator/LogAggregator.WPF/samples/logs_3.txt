@@ -1,0 +1,25 @@
+[2025-10-16 10:00:00] INFO - Missing service name
+[2025-10-16 10:10:00] UNKNOWN Service - Invalid severity
+[2025-10-16 10:20:00] DEBUG InventoryService - Sample log message
+[2025-10-16 10:30:00] CRITICAL OrderService - Sample log message
+[2025-10-16 10:40:00] DEBUG PaymentService - Sample log message
+[2025-10-16 10:50:00] CRITICAL OrderService - Sample log message
+[2025-10-16 11:00:00] DEBUG InventoryService - Sample log message
+[2025-10-16 11:10:00] ERROR AuthService
+[2025-10-16 11:20:00] WARNING NotificationService - Sample log message
+[2025-10-16 11:30:00] CRITICAL OrderService - Sample log message
+[2025-10-16 11:40:00] ERROR NotificationService - Sample log message
+[2025-10-16 11:50:00] INFO NotificationService - Sample log message
+[2025-10-16 12:00:00] INFO NotificationService - Sample log message
+[2025-10-16 12:10:00] INFO InventoryService - Sample log message
+[2025-10-16 12:20:00] DEBUG OrderService - Sample log message
+[2025-10-16 12:30:00] CRITICAL AuthService - Sample log message
+[2025-10-16 12:40:00] DEBUG AuthService - Sample log message
+2025-10-16 12:50:00 WARNING - Missing brackets
+[2025-10-16 13:00:00] DEBUG NotificationService - Sample log message
+[2025-10-16 13:10:00] ERROR AuthService
+[2025-10-16 13:20:00] INFO PaymentService - Sample log message
+[2025-10-16 13:30:00] ERROR PaymentService - Sample log message
+[2025-10-16 13:40:00] CRITICAL AuthService - Sample log message
+[2025-10-16 13:50:00] INFO PaymentService - Sample log message
+[INVALID_TIMESTAMP] INFO AuthService - Corrupted timestamp

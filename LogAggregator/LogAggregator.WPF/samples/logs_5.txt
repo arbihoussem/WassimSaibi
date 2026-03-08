@@ -1,0 +1,25 @@
+[2025-10-16 12:00:00] INFO InventoryService - Sample log message
+[2025-10-16 12:10:00] ERROR NotificationService - Sample log message
+[2025-10-16 12:20:00] ERROR AuthService
+[2025-10-16 12:30:00] INFO OrderService - Sample log message
+[2025-10-16 12:40:00] CRITICAL OrderService - Sample log message
+[2025-10-16 12:50:00] CRITICAL AuthService - Sample log message
+[2025-10-16 13:00:00] WARNING PaymentService - Sample log message
+[2025-10-16 13:10:00] INFO InventoryService - Sample log message
+[2025-10-16 13:20:00] ERROR InventoryService - Sample log message
+[2025-10-16 13:30:00] CRITICAL AuthService - Sample log message
+[2025-10-16 13:40:00] ERROR OrderService - Sample log message
+[2025-10-16 13:50:00] CRITICAL NotificationService - Sample log message
+[2025-10-16 14:00:00] INFO NotificationService - Sample log message
+[2025-10-16 14:10:00] ERROR OrderService - Sample log message
+[2025-10-16 14:20:00] WARNING OrderService - Sample log message
+[2025-10-16 14:30:00] CRITICAL OrderService - Sample log message
+[2025-10-16 14:40:00] ERROR InventoryService - Sample log message
+[2025-10-16 14:50:00] WARNING NotificationService - Sample log message
+[2025-10-16 15:00:00] DEBUG OrderService - Sample log message
+[INVALID_TIMESTAMP] INFO AuthService - Corrupted timestamp
+[2025-10-16 15:20:00] DEBUG NotificationService - Sample log message
+[2025-10-16 15:30:00] INFO AuthService - Sample log message
+[2025-10-16 15:40:00] DEBUG NotificationService - Sample log message
+[2025-10-16 15:50:00] DEBUG AuthService - Sample log message
+[2025-10-16 16:00:00] UNKNOWN Service - Invalid severity

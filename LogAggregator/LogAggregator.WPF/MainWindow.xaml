@@ -1,0 +1,316 @@
+<Window x:Class="LogAggregator.WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Log Aggregator &amp; Analyzer — DRÄXLMAIER"
+        Icon="app_icon.ico"
+        Height="620" Width="960"
+        MinHeight="500" MinWidth="700"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F8">
+
+    <DockPanel>
+
+        <!-- ── TOP TOOLBAR ─────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top"
+                Background="#1E2A3A"
+                Padding="10,7">
+            <StackPanel Orientation="Horizontal">
+
+                <Button Command="{Binding BrowseFolderCommand}"
+                        Content="📁  Browse"
+                        Foreground="White" Background="#2E4057"
+                        BorderBrush="#4A6FA5" BorderThickness="1"
+                        Padding="12,5" Margin="0,0,6,0"
+                        Cursor="Hand"/>
+
+                <TextBox Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}"
+                         Width="320" Margin="0,0,10,0"
+                         IsReadOnly="True"
+                         Background="#263545" Foreground="#A0C4E8"
+                         BorderBrush="#4A6FA5" BorderThickness="1"
+                         VerticalContentAlignment="Center"
+                         Padding="6,0"
+                         FontFamily="Consolas" FontSize="12"/>
+
+                <Separator Background="#4A6FA5" Width="1" Margin="4,2"/>
+
+                <Button Command="{Binding StartWatchingCommand}"
+                        Content="▶  Start"
+                        Foreground="White" Background="#2E7D32"
+                        BorderBrush="#43A047" BorderThickness="1"
+                        Padding="12,5" Margin="6,0,4,0"
+                        Cursor="Hand"/>
+
+                <Button Command="{Binding StopWatchingCommand}"
+                        Content="⏹  Stop"
+                        Foreground="White" Background="#C62828"
+                        BorderBrush="#EF5350" BorderThickness="1"
+                        Padding="12,5" Margin="0,0,10,0"
+                        Cursor="Hand"/>
+
+                <Separator Background="#4A6FA5" Width="1" Margin="4,2"/>
+
+                <Button Command="{Binding GenerateReportCommand}"
+                        Content="📄  Export Report"
+                        Foreground="White" Background="#4A6FA5"
+                        BorderBrush="#6B8EC2" BorderThickness="1"
+                        Padding="12,5" Margin="6,0,4,0"
+                        Cursor="Hand"/>
+
+                <Button Command="{Binding ClearCommand}"
+                        Content="🗑  Clear"
+                        Foreground="White" Background="#5D4037"
+                        BorderBrush="#8D6E63" BorderThickness="1"
+                        Padding="12,5" Margin="0,0,0,0"
+                        Cursor="Hand"/>
+
+            </StackPanel>
+        </Border>
+
+        <!-- ── BOTTOM STATUS BAR ───────────────────────────────────── -->
+        <Border DockPanel.Dock="Bottom"
+                Background="#1E2A3A"
+                Padding="12,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status message -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusText}"
+                           Foreground="#A0C4E8"
+                           FontFamily="Consolas" FontSize="11"
+                           VerticalAlignment="Center"/>
+
+                <!-- Quick stats -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Run Text="ERR " Foreground="#EF5350" FontWeight="Bold"/>
+                        <Run Text="{Binding Stats.TotalErrors}" Foreground="White" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Run Text="WARN " Foreground="#FFA726" FontWeight="Bold"/>
+                        <Run Text="{Binding Stats.TotalWarnings}" Foreground="White"/>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Run Text="INFO " Foreground="#42A5F5"/>
+                        <Run Text="{Binding Stats.TotalInfo}" Foreground="White"/>
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                        <Run Text="SKIP " Foreground="#9E9E9E"/>
+                        <Run Text="{Binding Stats.TotalCorrupted}" Foreground="White"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+        <TabControl Background="#F4F6F8" BorderThickness="0" Margin="8,8,8,4">
+
+            <!-- ── TAB 1: Service Summary ─────────────────────────── -->
+            <TabItem Header="📊  Service Summary">
+                <DockPanel Background="White">
+
+                    <!-- Filter bar -->
+                    <Border DockPanel.Dock="Top"
+                            Background="#ECEFF1"
+                            Padding="10,7"
+                            BorderBrush="#CFD8DC" BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Filter by service name:"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       Foreground="#546E7A"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="220" Height="26"
+                                     Padding="6,2"
+                                     BorderBrush="#B0BEC5" BorderThickness="1"
+                                     FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Summary DataGrid -->
+                    <DataGrid ItemsSource="{Binding DisplayedSummaries}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserSortColumns="True"
+                              CanUserResizeColumns="True"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#ECEFF1"
+                              AlternatingRowBackground="#F8FAFB"
+                              RowBackground="White"
+                              BorderThickness="0"
+                              FontSize="13">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background"     Value="#263238"/>
+                                <Setter Property="Foreground"     Value="White"/>
+                                <Setter Property="FontWeight"     Value="SemiBold"/>
+                                <Setter Property="Padding"        Value="12,8"/>
+                                <Setter Property="FontSize"       Value="12"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="Service Name"
+                                                Binding="{Binding ServiceName}"
+                                                Width="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding"    Value="12,0"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="ERROR"
+                                                Binding="{Binding ErrorCount}"
+                                                Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="FontWeight"          Value="Bold"/>
+                                        <Setter Property="Foreground"          Value="#C62828"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="WARNING"
+                                                Binding="{Binding WarningCount}"
+                                                Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="Foreground"          Value="#E65100"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="INFO"
+                                                Binding="{Binding InfoCount}"
+                                                Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="Foreground"          Value="#1565C0"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="DEBUG"
+                                                Binding="{Binding DebugCount}"
+                                                Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="Foreground"          Value="#555"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="UNKNOWN"
+                                                Binding="{Binding UnknownCount}"
+                                                Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="Foreground"          Value="#9E9E9E"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="TOTAL"
+                                                Binding="{Binding TotalCount}"
+                                                Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment"   Value="Center"/>
+                                        <Setter Property="FontWeight"          Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ── TAB 2: Skipped Entries ─────────────────────────── -->
+            <TabItem Header="⚠️  Skipped Entries">
+                <DataGrid ItemsSource="{Binding CorruptedEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#ECEFF1"
+                          AlternatingRowBackground="#FFF8F8"
+                          RowBackground="White"
+                          BorderThickness="0"
+                          FontSize="12">
+
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#263238"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding"    Value="12,8"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Source File"
+                                            Binding="{Binding SourceFile}"
+                                            Width="280">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="8,0"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Foreground" Value="#546E7A"/>
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Skip Reason"
+                                            Binding="{Binding SkipReason}"
+                                            Width="300">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding"   Value="8,0"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Foreground" Value="#BF360C"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Raw Content"
+                                            Binding="{Binding RawContent}"
+                                            Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding"    Value="8,0"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Foreground"  Value="#757575"/>
+                                    <Setter Property="FontFamily"  Value="Consolas"/>
+                                    <Setter Property="FontSize"    Value="11"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
+</Window>

@@ -1,0 +1,25 @@
+2025-10-16 08:01:00 INVALID PaymentService - Sample message 0
+[2025-10-16 08:11:00] DEBUG AuthService - Sample message 1
+[2025-10-16 08:21:00] INFO InventoryService - Sample message 2
+[2025-10-16 08:31:00] CRITICAL InventoryService - Sample message 3
+[2025-10-16 08:41:00] INFO OrderService - Sample message 4
+[2025-10-16 08:51:00] ERROR AuthService - Sample message 5
+[2025-10-16 09:01:00] CRITICAL AuthService - Sample message 6
+2025-10-16 09:11:00 DEBUG AuthService - Sample message 7
+[2025-10-16 09:21:00] CRITICAL OrderService - Sample message 8
+[2025-10-16 09:31:00] DEBUG - Sample message 9
+[2025-10-16 09:41:00] CRITICAL PaymentService - Sample message 10
+[2025-10-16 09:51:00] ERROR PaymentService
+[2025-10-16 10:01:00] INFO AuthService - Sample message 12
+[2025-10-16 10:11:00] DEBUG PaymentService - Sample message 13
+2025-10-16 10:21:00 INFO PaymentService - Sample message 14
+[2025-10-16 10:31:00] INFO PaymentService - Sample message 15
+[2025-10-16 10:41:00] CRITICAL InventoryService - Sample message 16
+[2025-10-16 10:51:00] INVALID InventoryService - Sample message 17
+[2025-10-16 11:01:00] INFO - Sample message 18
+[2025-10-16 11:11:00] ERROR AuthService - Sample message 19
+[2025-10-16 11:21:00] INVALID OrderService - Sample message 20
+2025-10-16 11:31:00 DEBUG AuthService - Sample message 21
+[2025-10-16 11:41:00] INVALID PaymentService
+[2025-10-16 11:51:00] CRITICAL OrderService - Sample message 23
+[2025-10-16 12:01:00] ERROR InventoryService - Sample message 24

@@ -1,0 +1,25 @@
+2025-10-16 08:00:00 DEBUG PaymentService - Sample message 0
+[2025-10-16 08:10:00] WARNING AuthService - Sample message 1
+[2025-10-16 08:20:00] WARNING PaymentService - Sample message 2
+[2025-10-16 08:30:00] DEBUG AuthService - Sample message 3
+[2025-10-16 08:40:00] DEBUG PaymentService - Sample message 4
+[2025-10-16 08:50:00] DEBUG OrderService - Sample message 5
+[2025-10-16 09:00:00] INVALID InventoryService - Sample message 6
+2025-10-16 09:10:00 INFO AuthService - Sample message 7
+[2025-10-16 09:20:00] DEBUG InventoryService - Sample message 8
+[2025-10-16 09:30:00] INVALID - Sample message 9
+[2025-10-16 09:40:00] ERROR AuthService - Sample message 10
+[2025-10-16 09:50:00] WARNING AuthService
+[2025-10-16 10:00:00] WARNING OrderService - Sample message 12
+[2025-10-16 10:10:00] WARNING OrderService - Sample message 13
+2025-10-16 10:20:00 ERROR InventoryService - Sample message 14
+[2025-10-16 10:30:00] INFO OrderService - Sample message 15
+[2025-10-16 10:40:00] INFO InventoryService - Sample message 16
+[2025-10-16 10:50:00] INVALID InventoryService - Sample message 17
+[2025-10-16 11:00:00] ERROR - Sample message 18
+[2025-10-16 11:10:00] DEBUG OrderService - Sample message 19
+[2025-10-16 11:20:00] INVALID OrderService - Sample message 20
+2025-10-16 11:30:00 INVALID OrderService - Sample message 21
+[2025-10-16 11:40:00] DEBUG OrderService
+[2025-10-16 11:50:00] INFO PaymentService - Sample message 23
+[2025-10-16 12:00:00] ERROR AuthService - Sample message 24
