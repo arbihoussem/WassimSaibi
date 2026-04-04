@@ -40,6 +40,36 @@ namespace LogAggregator.Core.Infrastructure.Services
             }
         }
 
+        public void RemoveFile(string filePath)
+        {
+            // remove all entries that came from this file, then rebuild counts
+            foreach (var key in _summaries.Keys.ToList())
+            {
+                var summary = _summaries[key];
+                lock (summary)
+                {
+                    summary.Entries.RemoveAll(e => e.SourceFile == filePath);
+
+                    // rebuild counts from remaining entries
+                    summary.ErrorCount   = summary.Entries.Count(e => e.Level == LogLevel.Error);
+                    summary.WarningCount = summary.Entries.Count(e => e.Level == LogLevel.Warning);
+                    summary.InfoCount    = summary.Entries.Count(e => e.Level == LogLevel.Info);
+                    summary.DebugCount   = summary.Entries.Count(e => e.Level == LogLevel.Debug);
+                    summary.UnknownCount = summary.Entries.Count(e => e.Level == LogLevel.Unknown);
+
+                    // remove the service entirely if it has no entries left
+                    if (summary.TotalCount == 0)
+                        _summaries.TryRemove(key, out _);
+                }
+            }
+
+            // remove corrupted entries from this file
+            var remaining = _corruptedEntries.Where(e => e.SourceFile != filePath).ToList();
+            while (_corruptedEntries.TryTake(out _)) { }
+            foreach (var e in remaining)
+                _corruptedEntries.Add(e);
+        }
+
         public IReadOnlyList<ServiceSummary> GetSummaries()
         {
             return _summaries.Values

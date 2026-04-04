@@ -11,17 +11,18 @@ namespace LogAggregator.WPF.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
-        private readonly FileWatcherService   _fileSource;
-        private readonly ParserRegistry       _parsers;
-        private readonly AggregationService   _aggregation;
-        private readonly ReportService        _report;
+        private readonly ILogFileSource      _fileSource;
+        private readonly ParserRegistry      _parsers;
+        private readonly IAggregationService _aggregation;
+        private readonly IReportService      _report;
 
-        private string _rootPath    = string.Empty;
-        private string _statusText  = "Step 1: Click Browse. Step 2: Click Start.";
-        private string _filterText  = string.Empty;
-        private bool   _isWatching  = false;
+        private string _rootPath   = string.Empty;
+        private string _statusText = "Step 1: Click Browse. Step 2: Click Start.";
+        private string _filterText = string.Empty;
+        private bool   _isWatching = false;
         private AggregationStats _stats = new();
         private List<ServiceSummary> _allSummaries = new();
+
         public string RootPath
         {
             get => _rootPath;
@@ -68,27 +69,21 @@ namespace LogAggregator.WPF.ViewModels
         public ICommand StopWatchingCommand   { get; }
         public ICommand GenerateReportCommand { get; }
         public ICommand ClearCommand          { get; }
-        public MainViewModel()
+
+        // DI constructor — services are injected automatically by the container
+        public MainViewModel(
+            ILogFileSource      fileSource,
+            ParserRegistry      parsers,
+            IAggregationService aggregation,
+            IReportService      report)
         {
-            _fileSource  = new FileWatcherService();
-            _parsers     = new ParserRegistry();
-            _aggregation = new AggregationService();
-            _report      = new ReportService(_aggregation);
-
-            _parsers.Register(new TextLogParser());
-            _parsers.Register(new JsonLogParser());
-            _parsers.Register(new XmlLogParser());
-
-            // Plugins are loaded from a /plugins folder next to the exe.
-            // Any DLL implementing ILogParser is picked up automatically.
-            var pluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
-            var loader    = new PluginLoader();
-            foreach (var plugin in loader.LoadFromDirectory(pluginDir))
-                _parsers.Register(plugin);
+            _fileSource  = fileSource;
+            _parsers     = parsers;
+            _aggregation = aggregation;
+            _report      = report;
 
             BrowseFolderCommand = new RelayCommand(_ => BrowseFolder());
 
-            // Start is only enabled when a folder is selected and we're not already watching
             StartWatchingCommand = new RelayCommand(
                 _ => StartWatching(),
                 _ => !IsWatching && !string.IsNullOrWhiteSpace(RootPath));
@@ -104,11 +99,11 @@ namespace LogAggregator.WPF.ViewModels
             ClearCommand = new RelayCommand(_ => ClearAll());
 
             _fileSource.LogFileDetected += OnLogFileDetected;
+            _fileSource.LogFileDeleted  += OnLogFileDeleted;
         }
 
         private void BrowseFolder()
         {
-            // Use WPF's OpenFolderDialog (available in .NET 8 WPF)
             var dialog = new Microsoft.Win32.OpenFolderDialog
             {
                 Title = "Select root log folder to monitor"
@@ -186,16 +181,14 @@ namespace LogAggregator.WPF.ViewModels
             StatusText = "Cleared.";
         }
 
-        // Called on a background thread, UI updates must go through Dispatcher
+        // Called on a background thread — UI updates must go through Dispatcher
         private void OnLogFileDetected(object? sender, LogFileDetectedArgs args)
         {
             try
             {
-                // Parse on background thread
                 var entries = _parsers.ParseFile(args.FilePath).ToList();
                 _aggregation.AddEntries(entries);
 
-                // UI update MUST be on UI thread
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusText = $"Parsed: {Path.GetFileName(args.FilePath)} ({entries.Count} entries)";
@@ -207,6 +200,17 @@ namespace LogAggregator.WPF.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                     StatusText = $"Parse error in {Path.GetFileName(args.FilePath)}: {ex.Message}");
             }
+        }
+
+        private void OnLogFileDeleted(object? sender, LogFileDeletedArgs args)
+        {
+            _aggregation.RemoveFile(args.FilePath);
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                StatusText = $"File removed: {Path.GetFileName(args.FilePath)} — counts updated";
+                RefreshUI();
+            });
         }
 
         private void RefreshUI()

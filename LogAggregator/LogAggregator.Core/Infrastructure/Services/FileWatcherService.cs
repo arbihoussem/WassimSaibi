@@ -12,6 +12,7 @@ namespace LogAggregator.Core.Infrastructure.Services
             { ".log", ".txt", ".json", ".xml", ".csv", ".dat" };
 
         public event EventHandler<LogFileDetectedArgs>? LogFileDetected;
+        public event EventHandler<LogFileDeletedArgs>?  LogFileDeleted;
 
         public void StartWatching(string rootPath)
         {
@@ -36,6 +37,7 @@ namespace LogAggregator.Core.Infrastructure.Services
 
             watcher.Created += (_, e) => { if (IsSupported(e.FullPath)) RaiseDetected(e.FullPath, isNew: true);  };
             watcher.Changed += (_, e) => { if (IsSupported(e.FullPath)) RaiseDetected(e.FullPath, isNew: false); };
+            watcher.Deleted += (_, e) => { if (IsSupported(e.FullPath)) RaiseDeleted(e.FullPath); };
             watcher.Error   += (_, _) => RescanAll(rootPath); // buffer overflow fallback
 
             _watchers.Add(watcher);
@@ -56,6 +58,9 @@ namespace LogAggregator.Core.Infrastructure.Services
 
         private void RaiseDetected(string path, bool isNew) =>
             LogFileDetected?.Invoke(this, new LogFileDetectedArgs(path, isNew));
+
+        private void RaiseDeleted(string path) =>
+            LogFileDeleted?.Invoke(this, new LogFileDeletedArgs(path));
 
         private static bool IsSupported(string path) =>
             _supportedExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());

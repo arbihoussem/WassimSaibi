@@ -3,6 +3,7 @@ namespace LogAggregator.Core.Domain
     public interface ILogFileSource
     {
         event EventHandler<LogFileDetectedArgs> LogFileDetected;
+        event EventHandler<LogFileDeletedArgs>  LogFileDeleted;
         void StartWatching(string rootPath);
         void StopWatching();
     }
@@ -16,6 +17,16 @@ namespace LogAggregator.Core.Domain
         {
             FilePath  = filePath;
             IsNewFile = isNewFile;
+        }
+    }
+
+    public class LogFileDeletedArgs : EventArgs
+    {
+        public string FilePath { get; }
+
+        public LogFileDeletedArgs(string filePath)
+        {
+            FilePath = filePath;
         }
     }
 }
