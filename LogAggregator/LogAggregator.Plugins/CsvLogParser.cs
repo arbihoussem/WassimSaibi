@@ -8,7 +8,8 @@ namespace LogAggregator.Plugins
     {
         public string ParserName => "CSV Plugin Parser (.csv)";
 
-        public bool CanParse(string filePath) =>
+        public bool CanParse(string filePath) => 
+
             Path.GetExtension(filePath).ToLowerInvariant() == ".csv";
 
         public IEnumerable<LogEntry> Parse(string filePath)
