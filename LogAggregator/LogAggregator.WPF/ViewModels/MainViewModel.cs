@@ -1,107 +1,74 @@
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Windows;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LogAggregator.Core.Domain;
 using LogAggregator.Core.Infrastructure.Parsers;
 using LogAggregator.Core.Infrastructure.Services;
-using LogAggregator.WPF.Helpers;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows;
 
 namespace LogAggregator.WPF.ViewModels
 {
-    public class MainViewModel : ViewModelBase
+    public partial class MainViewModel : ObservableObject
     {
-        private readonly ILogFileSource      _fileSource;
-        private readonly ParserRegistry      _parsers;
+        private readonly ILogFileSource _fileSource;
+        private readonly ParserRegistry _parsers;
         private readonly IAggregationService _aggregation;
-        private readonly IReportService      _report;
-
-        private string _rootPath   = string.Empty;
-        private string _statusText = "Step 1: Click Browse. Step 2: Click Start.";
-        private string _filterText = string.Empty;
-        private bool   _isWatching = false;
-        private AggregationStats _stats = new();
+        private readonly IReportService _report;
         private List<ServiceSummary> _allSummaries = new();
 
-        public string RootPath
-        {
-            get => _rootPath;
-            set => SetField(ref _rootPath, value);
-        }
+        // Observable properties
 
-        public string StatusText
-        {
-            get => _statusText;
-            set => SetField(ref _statusText, value);
-        }
+        [ObservableProperty]
+        private string rootPath = string.Empty;
 
-        public string FilterText
-        {
-            get => _filterText;
-            set
-            {
-                SetField(ref _filterText, value);
-                ApplyFilter();
-            }
-        }
+        [ObservableProperty]
+        private string statusText = "Step 1: Click Browse. Step 2: Click Start.";
 
-        public bool IsWatching
-        {
-            get => _isWatching;
-            set
-            {
-                SetField(ref _isWatching, value);
-                CommandManager.InvalidateRequerySuggested();
-            }
-        }
+        [ObservableProperty]
+        private string filterText = string.Empty;
 
-        public AggregationStats Stats
-        {
-            get => _stats;
-            set => SetField(ref _stats, value);
-        }
+        [ObservableProperty]
+        private bool isWatching;
+
+        [ObservableProperty]
+        private AggregationStats stats = new();
 
         public ObservableCollection<ServiceSummary> DisplayedSummaries { get; } = new();
-        public ObservableCollection<LogEntry>       CorruptedEntries   { get; } = new();
+        public ObservableCollection<LogEntry> CorruptedEntries { get; } = new();
 
-        public ICommand BrowseFolderCommand   { get; }
-        public ICommand StartWatchingCommand  { get; }
-        public ICommand StopWatchingCommand   { get; }
-        public ICommand GenerateReportCommand { get; }
-        public ICommand ClearCommand          { get; }
-
-        // DI constructor — services are injected automatically by the container
+        // Constructor (DI-ready)
         public MainViewModel(
-            ILogFileSource      fileSource,
-            ParserRegistry      parsers,
+            ILogFileSource fileSource,
+            ParserRegistry parsers,
             IAggregationService aggregation,
-            IReportService      report)
+            IReportService report)
         {
-            _fileSource  = fileSource;
-            _parsers     = parsers;
+            _fileSource = fileSource;
+            _parsers = parsers;
             _aggregation = aggregation;
-            _report      = report;
-
-            BrowseFolderCommand = new RelayCommand(_ => BrowseFolder());
-
-            StartWatchingCommand = new RelayCommand(
-                _ => StartWatching(),
-                _ => !IsWatching && !string.IsNullOrWhiteSpace(RootPath));
-
-            StopWatchingCommand = new RelayCommand(
-                _ => StopWatching(),
-                _ => IsWatching);
-
-            GenerateReportCommand = new AsyncRelayCommand(
-                async _ => await GenerateReportAsync(),
-                _ => _allSummaries.Any() || _aggregation.GetCorruptedEntries().Any());
-
-            ClearCommand = new RelayCommand(_ => ClearAll());
+            _report = report;
 
             _fileSource.LogFileDetected += OnLogFileDetected;
-            _fileSource.LogFileDeleted  += OnLogFileDeleted;
+            _fileSource.LogFileDeleted += OnLogFileDeleted;
         }
 
+        // Property change hooks
+
+        partial void OnFilterTextChanged(string value)
+        {
+            ApplyFilter();
+        }
+
+        partial void OnIsWatchingChanged(bool value)
+        {
+            StartWatchingCommand.NotifyCanExecuteChanged();
+            StopWatchingCommand.NotifyCanExecuteChanged();
+        }
+
+        // Commands (MVVM Toolkit)
+
+        [RelayCommand]
         private void BrowseFolder()
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog
@@ -111,21 +78,16 @@ namespace LogAggregator.WPF.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                RootPath   = dialog.FolderName;
+                RootPath = dialog.FolderName;
                 StatusText = $"Folder selected: {RootPath}";
+                StartWatchingCommand.NotifyCanExecuteChanged();
             }
         }
 
+        [RelayCommand(CanExecute = nameof(CanStartWatching))]
         private void StartWatching()
-        {
-            if (string.IsNullOrWhiteSpace(RootPath))
-            {
-                StatusText = "No folder selected! Click Browse first.";
-                return;
-            }
-
-            _aggregation.Clear();
-            ClearCollections();
+        {         _aggregation.Clear();
+                   ClearCollections();
 
             try
             {
@@ -140,6 +102,10 @@ namespace LogAggregator.WPF.ViewModels
             }
         }
 
+        private bool CanStartWatching()
+            => !IsWatching && !string.IsNullOrWhiteSpace(RootPath);
+
+        [RelayCommand(CanExecute = nameof(IsWatching))]
         private void StopWatching()
         {
             _fileSource.StopWatching();
@@ -147,16 +113,18 @@ namespace LogAggregator.WPF.ViewModels
             StatusText = "Stopped.";
         }
 
+        [RelayCommand]
         private async Task GenerateReportAsync()
         {
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                Title            = "Save Aggregation Report",
-                Filter           = "Log files (*.log)|*.log|Text files (*.txt)|*.txt",
-                FileName         = $"report_{DateTime.Now:yyyyMMdd_HHmmss}.log",
-                // default to Downloads so the report is never saved inside the watched folder
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
-                                   + @"\Downloads"
+                Title = "Save Aggregation Report",
+                Filter = "Log files (*.log)|*.log|Text files (*.txt)|*.txt",
+                FileName = $"report_{DateTime.Now:yyyyMMdd_HHmmss}.log",
+                InitialDirectory =
+                    Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Downloads")
             };
 
             if (dialog.ShowDialog() == true)
@@ -174,14 +142,16 @@ namespace LogAggregator.WPF.ViewModels
             }
         }
 
-        private void ClearAll()
+        [RelayCommand]
+        private void Clear()
         {
             _aggregation.Clear();
             ClearCollections();
             StatusText = "Cleared.";
         }
 
-        // Called on a background thread — UI updates must go through Dispatcher
+        // File watcher callbacks
+
         private void OnLogFileDetected(object? sender, LogFileDetectedArgs args)
         {
             try
@@ -189,11 +159,7 @@ namespace LogAggregator.WPF.ViewModels
                 var entries = _parsers.ParseFile(args.FilePath).ToList();
                 _aggregation.AddEntries(entries);
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    StatusText = $"Parsed: {Path.GetFileName(args.FilePath)} ({entries.Count} entries)";
-                    RefreshUI();
-                });
+                Application.Current.Dispatcher.Invoke(RefreshUI);
             }
             catch (Exception ex)
             {
@@ -205,18 +171,16 @@ namespace LogAggregator.WPF.ViewModels
         private void OnLogFileDeleted(object? sender, LogFileDeletedArgs args)
         {
             _aggregation.RemoveFile(args.FilePath);
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                StatusText = $"File removed: {Path.GetFileName(args.FilePath)} — counts updated";
-                RefreshUI();
-            });
+            Application.Current.Dispatcher.Invoke(RefreshUI);
         }
+
+        // UI refresh helpers
 
         private void RefreshUI()
         {
             _allSummaries = _aggregation.GetSummaries().ToList();
-            Stats         = _aggregation.GetStats();
+            Stats = _aggregation.GetStats();
+
             ApplyFilter();
             RefreshCorrupted();
 

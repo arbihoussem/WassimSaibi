@@ -1,27 +1,26 @@
 using System.IO;
 using System.Windows;
+using Ninject;
 using LogAggregator.Core.Domain;
 using LogAggregator.Core.Infrastructure.Parsers;
 using LogAggregator.Core.Infrastructure.Services;
+using LogAggregator.Plugins;
 using LogAggregator.WPF.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LogAggregator.WPF
 {
     public partial class App : Application
     {
-        private ServiceProvider _serviceProvider = null!;
+        public static IKernel Kernel = null!;
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // build the DI container
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            _serviceProvider = services.BuildServiceProvider();
+            Kernel = new StandardKernel();
+            ConfigureServices(Kernel);
 
-            // global error handler — show MessageBox instead of silent crash
+            // Global exception handler (same behavior as before)
             DispatcherUnhandledException += (_, args) =>
             {
                 MessageBox.Show(
@@ -29,49 +28,70 @@ namespace LogAggregator.WPF
                     "Log Aggregator — Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+
                 args.Handled = true;
             };
 
-            // create and show MainWindow via DI
-            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            var mainWindow = Kernel.Get<MainWindow>();
             mainWindow.Show();
         }
 
-        private static void ConfigureServices(ServiceCollection services)
+        private static void ConfigureServices(IKernel kernel)
         {
-            // Core services — one instance shared across the app
-            services.AddSingleton<IAggregationService, AggregationService>();
-            services.AddSingleton<IReportService,      ReportService>();
-            services.AddSingleton<ILogFileSource,      FileWatcherService>();
+        
+            // Core services — SINGLETON
+      
 
-            // ParserRegistry — registered as singleton, plugins loaded once at startup
-            services.AddSingleton<ParserRegistry>(provider =>
-            {
-                var registry = new ParserRegistry();
+            kernel.Bind<IAggregationService>()
+                  .To<AggregationService>()
+                  .InSingletonScope();
 
-                // built-in parsers
-                registry.Register(new TextLogParser());
-                registry.Register(new JsonLogParser());
-                registry.Register(new XmlLogParser());
+            kernel.Bind<IReportService>()
+                  .To<ReportService>()
+                  .InSingletonScope();
 
-                // plugins from /plugins folder next to the exe
-                var pluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins");
-                var loader    = new PluginLoader();
-                foreach (var plugin in loader.LoadFromDirectory(pluginDir))
-                    registry.Register(plugin);
+            kernel.Bind<ILogFileSource>()
+                  .To<FileWatcherService>()
+                  .InSingletonScope();
 
-                return registry;
-            });
+     
+            // ParserRegistry — SINGLETON with plugins
+      
 
-            // ViewModel and View
-            services.AddTransient<MainViewModel>();
-            services.AddTransient<MainWindow>();
+            kernel.Bind<ParserRegistry>()
+                  .ToMethod(_ =>
+                  {
+                      var registry = new ParserRegistry();
+
+                      // Built-in parsers
+                      registry.Register(new TextLogParser());
+                      registry.Register(new JsonLogParser());
+                      registry.Register(new XmlLogParser());
+
+                      // Plugins from /plugins directory
+                      var pluginDir = Path.Combine(
+                          AppDomain.CurrentDomain.BaseDirectory,
+                          "plugins");
+
+                      var loader = new PluginLoader();
+                      foreach (var plugin in loader.LoadFromDirectory(pluginDir))
+                          registry.Register(plugin);
+
+                      return registry;
+                  })
+                  .InSingletonScope();
+
+    
+            // ViewModels & Views — TRANSIENT
+  
+
+            kernel.Bind<MainViewModel>().ToSelf();
+            kernel.Bind<MainWindow>().ToSelf();
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // dispose the container cleanly on exit
-            _serviceProvider.Dispose();
+            Kernel.Dispose();
             base.OnExit(e);
         }
     }
