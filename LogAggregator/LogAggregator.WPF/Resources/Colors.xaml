@@ -1,0 +1,12 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Severity Colors -->
+    <Color x:Key="ErrorColor">#C62828</Color>
+    <Color x:Key="WarningColor">#E65100</Color>
+    <Color x:Key="InfoColor">#1565C0</Color>
+    <Color x:Key="DebugColor">#555555</Color>
+    <Color x:Key="UnknownColor">#9E9E9E</Color>
+
+</ResourceDictionary>

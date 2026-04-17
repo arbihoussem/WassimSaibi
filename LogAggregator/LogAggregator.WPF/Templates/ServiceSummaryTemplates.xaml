@@ -1,0 +1,36 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:domain="clr-namespace:LogAggregator.Core.Domain;assembly=LogAggregator.Core">
+
+    <!-- Service name -->
+    <DataTemplate x:Key="ServiceNameTemplate">
+        <TextBlock Text="{Binding ServiceName}"
+                   FontWeight="SemiBold"
+                   Padding="12,0"
+                   VerticalAlignment="Center"/>
+    </DataTemplate>
+
+    <!-- ERROR -->
+    <DataTemplate x:Key="ErrorCountTemplate">
+        <TextBlock Text="{Binding ErrorCount}"
+                   Foreground="{StaticResource ErrorBrush}"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"/>
+    </DataTemplate>
+
+    <!-- WARNING -->
+    <DataTemplate x:Key="WarningCountTemplate">
+        <TextBlock Text="{Binding WarningCount}"
+                   Foreground="{StaticResource WarningBrush}"
+                   HorizontalAlignment="Center"/>
+    </DataTemplate>
+
+    <!-- INFO -->
+    <DataTemplate x:Key="InfoCountTemplate">
+        <TextBlock Text="{Binding InfoCount}"
+                   Foreground="{StaticResource InfoBrush}"
+                   HorizontalAlignment="Center"/>
+    </DataTemplate>
+
+</ResourceDictionary>
